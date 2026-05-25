@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매일 아침 루틴</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --border: #e5e3dc;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6a65;
+    --text-muted: #9e9d97;
+    --green-bg: #eaf3de; --green-text: #3b6d11; --green-fill: #639922;
+    --blue-bg: #e6f1fb; --blue-text: #185fa5; --blue-fill: #378add;
+    --amber-bg: #faeeda; --amber-text: #854f0b; --amber-fill: #ef9f27;
+    --teal-bg: #e1f5ee; --teal-text: #0f6e56; --teal-fill: #1d9e75;
+    --purple-bg: #eeedfe; --purple-text: #534ab7; --purple-fill: #7f77dd;
+    --danger-bg: #fcebeb; --danger-text: #a32d2d;
+    --warning-bg: #faeeda; --warning-text: #854f0b;
+    --success-bg: #eaf3de; --success-text: #3b6d11;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .container { max-width: 680px; margin: 0 auto; }
+
+  .top-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .page-title { font-size: 22px; font-weight: 600; line-height: 1.3; }
+  .page-date { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+  .right-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+  .total-ring {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 500;
+  }
+
+  .reset-btn {
+    font-size: 12px; padding: 5px 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    border-radius: 99px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .reset-btn:hover { background: #f0ede6; }
+
+  .overall-bar {
+    height: 6px; background: var(--border);
+    border-radius: 3px; overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .overall-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #639922, #1d9e75);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 10px;
+  }
+
+  .sec-header {
+    display: flex; align-items: center;
+    gap: 10px; margin-bottom: 10px;
+  }
+
+  .sec-icon {
+    width: 30px; height: 30px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+
+  .sec-title { font-size: 14px; font-weight: 600; flex: 1; }
+
+  .sec-badge {
+    font-size: 11px; font-weight: 500;
+    padding: 2px 8px; border-radius: 99px;
+  }
+
+  .progress-bar {
+    height: 3px; background: var(--border);
+    border-radius: 2px; overflow: hidden;
+    margin-top: 10px;
+  }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+  .task-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .task-item {
+    display: flex; align-items: flex-start;
+    gap: 10px; padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.12s;
+    border: 1px solid transparent;
+    user-select: none;
+  }
+  .task-item:hover { background: var(--bg); border-color: var(--border); }
+  .task-item.done { opacity: 0.45; }
+  .task-item.done .task-label { text-decoration: line-through; color: var(--text-muted); }
+
+  .checkbox {
+    width: 16px; height: 16px; flex-shrink: 0;
+    border: 1.5px solid #ccc; border-radius: 4px;
+    margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .task-item.done .checkbox {
+    background: var(--success-bg);
+    border-color: var(--green-fill);
+  }
+  .task-item.done .checkbox::after {
+    content: '';
+    display: block; width: 8px; height: 8px;
+    background: var(--green-fill);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  }
+
+  .task-body { flex: 1; min-width: 0; }
+  .task-label { font-size: 13px; line-height: 1.5; }
+
+  .tag {
+    display: inline-block; font-size: 10px;
+    padding: 1px 6px; border-radius: 99px;
+    font-weight: 500; margin-top: 3px;
+    margin-right: 4px;
+  }
+  .tag-daily { background: var(--danger-bg); color: var(--danger-text); }
+  .tag-weekly { background: var(--warning-bg); color: var(--warning-text); }
+
+  .links-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+  .link-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; padding: 3px 8px;
+    border-radius: 99px; border: 1px solid var(--border);
+    color: var(--blue-text); text-decoration: none;
+    background: var(--surface);
+    transition: background 0.12s;
+  }
+  .link-chip:hover { background: var(--blue-bg); }
+  .link-chip svg { width: 10px; height: 10px; flex-shrink: 0; }
+
+  /* color themes */
+  .sec-green .sec-icon { background: var(--green-bg); color: var(--green-text); }
+  .sec-green .sec-badge { background: var(--green-bg); color: var(--green-text); }
+  .sec-green .progress-fill { background: var(--green-fill); }
+
+  .sec-blue .sec-icon { background: var(--blue-bg); color: var(--blue-text); }
+  .sec-blue .sec-badge { background: var(--blue-bg); color: var(--blue-text); }
+  .sec-blue .progress-fill { background: var(--blue-fill); }
+
+  .sec-amber .sec-icon { background: var(--amber-bg); color: var(--amber-text); }
+  .sec-amber .sec-badge { background: var(--amber-bg); color: var(--amber-text); }
+  .sec-amber .progress-fill { background: var(--amber-fill); }
+
+  .sec-teal .sec-icon { background: var(--teal-bg); color: var(--teal-text); }
+  .sec-teal .sec-badge { background: var(--teal-bg); color: var(--teal-text); }
+  .sec-teal .progress-fill { background: var(--teal-fill); }
+
+  .sec-purple .sec-icon { background: var(--purple-bg); color: var(--purple-text); }
+  .sec-purple .sec-badge { background: var(--purple-bg); color: var(--purple-text); }
+  .sec-purple .progress-fill { background: var(--purple-fill); }
+
+  svg.icon { display: inline-block; vertical-align: middle; }
+
+  @media (max-width: 480px) {
+    body { padding: 1.2rem 0.75rem 3rem; }
+    .page-title { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="top-bar">
+    <div>
+      <div class="page-title">매일 아침 루틴 ✅</div>
+      <div class="page-date" id="date-text"></div>
+    </div>
+    <div class="right-meta">
+      <div class="total-ring">
+        <span id="total-pct" style="font-size:16px;">0%</span>
+        <span style="font-size:12px;color:var(--text-muted);">완료</span>
+      </div>
+      <button class="reset-btn" onclick="resetAll()">↺ 초기화</button>
+    </div>
+  </div>
+
+  <div class="overall-bar"><div class="overall-fill" id="overall-fill"></div></div>
+
+  <!-- 아침 루틴 -->
+  <div class="section sec-green">
+    <div class="sec-header">
+      <div class="sec-icon">🌅</div>
+      <span class="sec-title">아침 루틴 — 기상 직후</span>
+      <span class="sec-badge" id="badge-morning">0/3</span>
+    </div>
+    <div class="task-list" id="list-morning">
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">📚 책 읽기 (1시간) — 읽은 내용 바로 정리</div>
+          <span class="tag tag-daily">매일</span>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">🏋️ 헬스장 가기</div>
+          <span class="tag tag-daily">매일</span>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">📊 한경코리아마켓 — 오전 시황 확인</div>
+          <span class="tag tag-daily">매일 아침 필수</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.youtube.com/@hkkoreamarket" target="_blank">
+              <svg class="icon" viewBox="0 0 12 12" fill="none"><path d="M9 6L4 9.5V2.5L9 6Z" fill="currentColor"/></svg>
+              한경코리아마켓
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-morning" style="width:0%"></div></div>
+  </div>
+
+  <!-- 경제 뉴스 -->
+  <div class="section sec-blue">
+    <div class="sec-header">
+      <div class="sec-icon">📰</div>
+      <span class="sec-title">경제 뉴스 확인 & 정리</span>
+      <span class="sec-badge" id="badge-news">0/2</span>
+    </div>
+    <div class="task-list" id="list-news">
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">매일경제 주요 뉴스 확인 & 요약 정리</div>
+          <span class="tag tag-daily">매일</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.mk.co.kr" target="_blank">매일경제</a>
+            <a class="link-chip" href="https://www.mk.co.kr/economy" target="_blank">경제 섹션</a>
+            <a class="link-chip" href="https://www.mk.co.kr/stock" target="_blank">증권 섹션</a>
+          </div>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">WSJ (월스트리트저널) 주요 기사 훑기</div>
+          <span class="tag tag-daily">매일</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.wsj.com" target="_blank">WSJ</a>
+            <a class="link-chip" href="https://www.wsj.com/news/markets" target="_blank">Markets</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-news" style="width:0%"></div></div>
+  </div>
+
+  <!-- 투자 공부 -->
+  <div class="section sec-amber">
+    <div class="sec-header">
+      <div class="sec-icon">📈</div>
+      <span class="sec-title">투자 공부 — 유튜브</span>
+      <span class="sec-badge" id="badge-invest">0/5</span>
+    </div>
+    <div class="task-list" id="list-invest">
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">세상학개론 — 최신 영상 확인</div>
+          <span class="tag tag-weekly">수시</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.youtube.com/@sesanghakgeron" target="_blank">유튜브 바로가기</a>
+          </div>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">이효석 아카데미 — 최신 영상 확인</div>
+          <span class="tag tag-weekly">수시</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.youtube.com/@hyoseokacademy" target="_blank">유튜브 바로가기</a>
+          </div>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">소수몽키 — 최신 영상 확인</div>
+          <span class="tag tag-weekly">수시</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.youtube.com/@sosoomonkey" target="_blank">유튜브 바로가기</a>
+          </div>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">미키김 — 최신 영상 확인</div>
+          <span class="tag tag-weekly">수시</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.youtube.com/@mickeykim_official" target="_blank">유튜브 바로가기</a>
+          </div>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">유튜브 구독 피드 — 새 투자 영상 전체 확인</div>
+          <span class="tag tag-weekly">수시</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.youtube.com/feed/subscriptions" target="_blank">구독 피드</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-invest" style="width:0%"></div></div>
+  </div>
+
+  <!-- 영어 -->
+  <div class="section sec-teal">
+    <div class="sec-header">
+      <div class="sec-icon">🗣️</div>
+      <span class="sec-title">영어 공부</span>
+      <span class="sec-badge" id="badge-english">0/2</span>
+    </div>
+    <div class="task-list" id="list-english">
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">프렌들리 유튜브 — 쉐도잉 1편</div>
+          <span class="tag tag-daily">매일</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.youtube.com/@friendlykorean" target="_blank">프렌들리 채널</a>
+          </div>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">WSJ 영어 원문 기사 읽기 (뉴스 확인과 겸용)</div>
+          <span class="tag tag-daily">매일</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.wsj.com" target="_blank">WSJ</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-english" style="width:0%"></div></div>
+  </div>
+
+  <!-- 공기업 준비 -->
+  <div class="section sec-purple">
+    <div class="sec-header">
+      <div class="sec-icon">🎓</div>
+      <span class="sec-title">공기업 시험 준비</span>
+      <span class="sec-badge" id="badge-exam">0/3</span>
+    </div>
+    <div class="task-list" id="list-exam">
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">NCS 문제 풀기 (의사소통 / 수리 / 문제해결)</div>
+          <span class="tag tag-daily">매일</span>
+          <div class="links-row">
+            <a class="link-chip" href="https://www.ncs.go.kr" target="_blank">NCS 공식</a>
+            <a class="link-chip" href="https://www.gosi.kr" target="_blank">사이버국가고시</a>
+          </div>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">재무관리 개념 or 문제 풀기</div>
+          <span class="tag tag-daily">매일</span>
+        </div>
+      </div>
+      <div class="task-item" onclick="toggle(this)">
+        <div class="checkbox"></div>
+        <div class="task-body">
+          <div class="task-label">회계 개념 or 분개 연습</div>
+          <span class="tag tag-daily">매일</span>
+        </div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-exam" style="width:0%"></div></div>
+  </div>
+
+</div>
+
+<script>
+const sections = [
+  { id: 'morning', total: 3 },
+  { id: 'news',    total: 2 },
+  { id: 'invest',  total: 5 },
+  { id: 'english', total: 2 },
+  { id: 'exam',    total: 3 }
+];
+
+const d = new Date();
+const days = ['일','월','화','수','목','금','토'];
+document.getElementById('date-text').textContent =
+  d.getFullYear() + '년 ' + (d.getMonth()+1) + '월 ' + d.getDate() + '일 (' + days[d.getDay()] + '요일)';
+
+function toggle(el) {
+  el.classList.toggle('done');
+  save(); updateAll();
+}
+
+function updateAll() {
+  let totalDone = 0, totalAll = 0;
+  sections.forEach(s => {
+    const items = document.querySelectorAll('#list-' + s.id + ' .task-item');
+    const done  = document.querySelectorAll('#list-' + s.id + ' .task-item.done').length;
+    totalDone += done; totalAll += items.length;
+    document.getElementById('badge-' + s.id).textContent = done + '/' + items.length;
+    document.getElementById('prog-' + s.id).style.width = Math.round(done / items.length * 100) + '%';
+  });
+  const pct = Math.round(totalDone / totalAll * 100);
+  document.getElementById('total-pct').textContent = pct + '%';
+  document.getElementById('overall-fill').style.width = pct + '%';
+}
+
+function save() {
+  const state = [];
+  document.querySelectorAll('.task-item').forEach((el, i) => {
+    state.push(el.classList.contains('done') ? 1 : 0);
+  });
+  try { localStorage.setItem('routine-state', JSON.stringify({ date: new Date().toDateString(), state })); } catch(e) {}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('routine-state');
+    if (!raw) return;
+    const { date, state } = JSON.parse(raw);
+    if (date !== new Date().toDateString()) return; // 날짜 바뀌면 초기화
+    document.querySelectorAll('.task-item').forEach((el, i) => {
+      if (state[i]) el.classList.add('done');
+    });
+  } catch(e) {}
+}
+
+function resetAll() {
+  document.querySelectorAll('.task-item.done').forEach(el => el.classList.remove('done'));
+  save(); updateAll();
+}
+
+load();
+updateAll();
+</script>
+</body>
+</html>
