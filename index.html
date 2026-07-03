@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -362,6 +361,34 @@
     <div class="progress-bar"><div class="progress-fill" id="prog-job" style="width:0%"></div></div>
   </div>
 
+  <!-- 타임트래커 -->
+  <div class="section" style="margin-top:10px;">
+    <div class="sec-header">
+      <div class="sec-icon" style="background:#f1efe8;color:#444441;">⏱</div>
+      <span class="sec-title">타임트래커</span>
+      <button onclick="resetTT()" style="font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;margin-left:auto;">↺ 초기화</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+      <span style="font-size:11px;color:#6b6a65;">색상 선택:</span>
+      <div class="tt-chip" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;cursor:pointer;border:1.5px solid #1a1a18;box-shadow:0 0 0 2px #1a1a18;font-size:11px;font-weight:500;color:#fff;background:#378add;" data-color="#378add" data-name="투자/공부" onclick="selectTTColor(this)">투자/공부</div>
+      <div class="tt-chip" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;cursor:pointer;border:1.5px solid transparent;font-size:11px;font-weight:500;color:#fff;background:#1d9e75;" data-color="#1d9e75" data-name="운동" onclick="selectTTColor(this)">운동</div>
+      <div class="tt-chip" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;cursor:pointer;border:1.5px solid transparent;font-size:11px;font-weight:500;color:#fff;background:#ef9f27;" data-color="#ef9f27" data-name="취업준비" onclick="selectTTColor(this)">취업준비</div>
+      <div class="tt-chip" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;cursor:pointer;border:1.5px solid transparent;font-size:11px;font-weight:500;color:#fff;background:#7f77dd;" data-color="#7f77dd" data-name="공기업시험" onclick="selectTTColor(this)">공기업시험</div>
+      <div class="tt-chip" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;cursor:pointer;border:1.5px solid transparent;font-size:11px;font-weight:500;color:#fff;background:#d4537e;" data-color="#d4537e" data-name="영어공부" onclick="selectTTColor(this)">영어공부</div>
+      <div class="tt-chip" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;cursor:pointer;border:1.5px solid transparent;font-size:11px;font-weight:500;color:#fff;background:#888780;" data-color="#888780" data-name="휴식/기타" onclick="selectTTColor(this)">휴식/기타</div>
+    </div>
+
+    <div id="tt-legend" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;min-height:16px;"></div>
+
+    <div style="display:grid;grid-template-columns:50px 14px 1fr;margin-bottom:4px;">
+      <div></div><div></div>
+      <div style="font-size:10px;color:#9e9d97;padding:0 8px 4px;border-bottom:1px solid #ccc;">업무 내용</div>
+    </div>
+
+    <div id="tt-inner"></div>
+  </div>
+
 </div>
 
 <script>
@@ -464,6 +491,137 @@ function resetAll() {
 
 load();
 updateAll();
+
+/* ── 타임트래커 ── */
+(function(){
+  const slots = [];
+  for(let h=6;h<=24;h++){
+    slots.push({h,half:false,label:h===24?'00:00':`${String(h).padStart(2,'0')}:00`});
+    if(h<24) slots.push({h,half:true,label:`${String(h).padStart(2,'0')}:30`});
+  }
+  const COLORS = [
+    {color:'#378add',name:'투자/공부'},
+    {color:'#1d9e75',name:'운동'},
+    {color:'#ef9f27',name:'취업준비'},
+    {color:'#7f77dd',name:'공기업시험'},
+    {color:'#d4537e',name:'영어공부'},
+    {color:'#888780',name:'휴식/기타'}
+  ];
+  let selColor=COLORS[0].color, selName=COLORS[0].name;
+  const blockData={};
+  let isDragging=false, dragMode=null;
+
+  function buildTracker(){
+    const el=document.getElementById('tt-inner');
+    slots.forEach((s,i)=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:grid;grid-template-columns:50px 14px 1fr;align-items:stretch;';
+
+      const lbl=document.createElement('div');
+      lbl.style.cssText=`font-size:11px;color:${s.half?'transparent':'#9e9d97'};text-align:right;padding-right:8px;height:32px;display:flex;align-items:center;justify-content:flex-end;font-variant-numeric:tabular-nums;`;
+      lbl.textContent=s.label;
+
+      const block=document.createElement('div');
+      block.id='ttb'+i;
+      block.style.cssText='height:32px;cursor:pointer;transition:opacity 0.1s;border-left:3px solid #e5e3dc;background:#f7f6f3;';
+      block.addEventListener('mousedown',e=>{
+        isDragging=true;
+        dragMode=blockData[i]?'erase':'fill';
+        applyBlock(i); e.preventDefault();
+      });
+      block.addEventListener('mouseenter',()=>{ if(isDragging) applyBlock(i); });
+
+      const inputWrap=document.createElement('div');
+      inputWrap.style.cssText=`height:32px;display:flex;align-items:center;border-bottom:0.5px solid ${s.half?'#e5e3dc':'#ccc'};`;
+      const input=document.createElement('input');
+      input.style.cssText='border:none;background:transparent;font-size:11px;color:#1a1a18;padding:0 8px;outline:none;width:100%;font-family:inherit;';
+      input.placeholder=s.half?'':
+        s.h<=8?'아침 루틴, 책 읽기...':
+        s.h<=10?'운동, 뉴스 확인...':
+        s.h<=13?'투자 공부, 유튜브...':
+        s.h<=17?'취업준비, 자소서...':
+        s.h<=20?'공기업 공부, NCS...':'저녁 복습, 정리...';
+      input.addEventListener('input',()=>saveTT());
+      inputWrap.appendChild(input);
+
+      row.appendChild(lbl); row.appendChild(block); row.appendChild(inputWrap);
+      el.appendChild(row);
+    });
+    document.addEventListener('mouseup',()=>isDragging=false);
+  }
+
+  function applyBlock(i){
+    if(dragMode==='erase') delete blockData[i];
+    else blockData[i]={color:selColor,name:selName};
+    renderBlocks(); saveTT();
+  }
+
+  function renderBlocks(){
+    slots.forEach((_,i)=>{
+      const b=document.getElementById('ttb'+i);
+      const d=blockData[i];
+      if(d){
+        const prev=blockData[i-1], next=blockData[i+1];
+        const samePrev=prev&&prev.color===d.color, sameNext=next&&next.color===d.color;
+        const r=samePrev&&sameNext?'0':samePrev?'0 0 3px 3px':sameNext?'3px 3px 0 0':'3px';
+        b.style.background=d.color;
+        b.style.borderLeftColor=d.color;
+        b.style.borderRadius=r;
+        b.style.opacity='1';
+      } else {
+        b.style.background='#f7f6f3';
+        b.style.borderLeftColor='#e5e3dc';
+        b.style.borderRadius='0';
+      }
+    });
+    renderLegend();
+  }
+
+  function renderLegend(){
+    const used={};
+    Object.values(blockData).forEach(d=>used[d.color]=d.name);
+    const leg=document.getElementById('tt-legend');
+    leg.innerHTML=Object.entries(used).map(([c,n])=>
+      `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#6b6a65;margin-right:10px;"><span style="width:14px;height:8px;border-radius:2px;background:${c};display:inline-block;"></span>${n}</span>`
+    ).join('');
+  }
+
+  function saveTT(){
+    const today=new Date().toDateString();
+    const inputs=[...document.querySelectorAll('#tt-inner input')].map(el=>el.value);
+    try{ localStorage.setItem('tt-blocks',JSON.stringify({date:today,blocks:blockData,inputs})); }catch(e){}
+  }
+
+  function loadTT(){
+    const today=new Date().toDateString();
+    try{
+      const raw=localStorage.getItem('tt-blocks');
+      if(!raw) return;
+      const {date,blocks,inputs}=JSON.parse(raw);
+      if(date!==today) return;
+      Object.entries(blocks).forEach(([k,v])=>blockData[k]=v);
+      renderBlocks();
+      const els=[...document.querySelectorAll('#tt-inner input')];
+      inputs.forEach((v,i)=>{ if(els[i]) els[i].value=v; });
+    }catch(e){}
+  }
+
+  window.resetTT=function(){
+    Object.keys(blockData).forEach(k=>delete blockData[k]);
+    document.querySelectorAll('#tt-inner input').forEach(el=>el.value='');
+    renderBlocks(); saveTT();
+  };
+
+  window.selectTTColor=function(el){
+    document.querySelectorAll('.tt-chip').forEach(c=>{c.style.boxShadow='none';c.style.border='1.5px solid transparent';});
+    el.style.border='1.5px solid #1a1a18';
+    el.style.boxShadow='0 0 0 2px #1a1a18';
+    selColor=el.dataset.color; selName=el.dataset.name;
+  };
+
+  buildTracker();
+  loadTT();
+})();
 </script>
 </body>
 </html>
